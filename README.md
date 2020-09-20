@@ -215,15 +215,15 @@ function updateOnlieCountFunc(self) {
 - 从key列表中分离出（key的格式为`sess:${用户名}/${时间戳}`）所有已登录的用户名
 - 通过广播`update_online_count`指令的方式，将最新的在线用户列表和用户数量信息推送给所有已登录的客户端
 
-#### 拉取在线用户信息的时机
+#### 更新在线用户信息的时机
 
 1. 新用户登录
 2. 已登录用户退出登录
 3. 管理员账号删除普通账号（如果该普通账号已登录，我们需要让其重定向到登录页）
 
-其中，对于第3种时机，处理情况比较特殊，需结合[myapp（todolist系统主后台）](https://gitlab.com/okfantasy007/myapp.git "myapp（todolist系统主后台）")来处理。
+其中，对于第3种时机，处理情况比较特殊，需结合[todolist-backend（todolist系统主后台）](https://github.com/okfantasy007/todolist-backend.git "todolist-backend（todolist系统主后台）")来处理。
 
-请看以下代码（来源于[myapp（todolist系统主后台）](https://gitlab.com/okfantasy007/myapp.git "myapp（todolist系统主后台）")）：
+请看以下代码（来源于[todolist-backend（todolist系统主后台）](https://github.com/okfantasy007/todolist-backend.git "todolist-backend（todolist系统主后台）")）：
 
 ```javascript
 //删除
@@ -336,7 +336,7 @@ router.post('/delete', function (req, res, next) {
 	});
 });
 ```
-其中有一段代码是，在成功删除账号之后去请求`node-websocket-msg-sender`的接口`/ws/deleteAccountToUpdateOnline`。
+其中有一段代码是，在成功删除账号之后去请求`todolist-msg`的接口`/ws/deleteAccountToUpdateOnline`。
 
 ```javascript
 router.post('/deleteAccountToUpdateOnline', function (req, res, next) {
