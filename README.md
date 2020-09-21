@@ -440,6 +440,70 @@ $pm2 list
 
 echo "=====deploy msg end====="
 ```
+
+`keep_most_2_msg_copy_by_for.sh`脚本代码如下，感兴趣的朋友可以参考：
+
+```shell
+#!/bin/bash 
+# 删除历史项目，只保留最近2个项目文件和msg项目
+
+CurrentPath=/home/liuyuanbing/todolist/tunnel
+LogFile="$CurrentPath/"run.log
+MaxSaveCount=2
+RunDir="msg"
+RunDirRegex=^"$RunDir"_.*
+DirArr=()
+RetainArr=()
+echo "=====>一次清理log开始<=====" >> $LogFile
+echo $RunDirRegex
+for element in `ls $CurrentPath`
+do
+	dir_or_file=$CurrentPath"/"$element
+	if [[ -d $dir_or_file && "$element" != $RunDir && "$element" =~ $RunDirRegex ]]
+	then
+		DirArr=(${DirArr[@]} $element)
+	fi
+done
+
+echo "-----所有目录------" >> $LogFile
+echo ${DirArr[@]}  >> $LogFile
+len=${#DirArr[*]}
+echo "len:"$len  >> $LogFile
+
+if [ $len -gt $MaxSaveCount ]
+then
+	#按文件名从大到小排序
+	for((i=0;i<len;i++))
+	do
+		for((j=0;j<len-i-1;j++))
+		do
+			if [[ "${DirArr[j]}" < "${DirArr[j+1]}" ]]
+			then
+				temp=${DirArr[j]}
+				DirArr[j]=${DirArr[j+1]}
+				DirArr[j+1]=$temp
+			fi
+		done
+	done
+
+	echo "-----排序后目录------" >> $LogFile
+	echo ${DirArr[@]} >> $LogFile
+	echo "-----清理开始------" >> $LogFile
+	echo "-----删除历史目录------" >> $LogFile
+	for((t=$MaxSaveCount;t<len;t++))
+	do
+		removeDir=$CurrentPath"/${DirArr[t]}"
+		echo "rm -r "$removeDir >> $LogFile
+		rm -r $removeDir
+	done
+
+	echo "-----清理完成------" >> $LogFile
+else
+	echo "no more than $MaxSaveCount $RunDir copy dirs in $CurrentPath"
+fi
+echo "=====>一次清理log结束<=====" >> $LogFile
+```
+
 ### nginx
 ```shell
 #websocket	
