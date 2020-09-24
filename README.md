@@ -372,49 +372,50 @@ function deleteToRedirectLogin(self, uid) {
 ```
 ## 部署
 该项目结合自己搭建的jenkins实现自动化部署。
+![部署](https://github.com/okfantasy007/todolist-msg/blob/master/public/deploy/todolist-msg%EF%BC%88jenkins%EF%BC%89.png "部署")
 
-### Build阶段
+### 构建阶段
 ```shell
 node -v
 npm -v
 #安装依赖包
 npm install
-#如果node-websocket-msg-sender.tar.gz存在，则删除；如果node-websocket-msg-sender.tar.gz不存在，则不进行删除操作
-rm -rf node-websocket-msg-sender.tar.gz
-#将当前workspace目录下的所有文件压缩到node-websocket-msg-sender.tar.gz
-tar -czf node-websocket-msg-sender.tar.gz *
+#如果msg.tar.gz存在，则删除；如果msg.tar.gz不存在，则不进行删除操作
+rm -rf msg.tar.gz
+#将当前workspace目录下的所有文件压缩到msg.tar.gz
+tar -czf msg.tar.gz *
 ```
-### Post-Build阶段
+### 构建后操作阶段
 ```shell
 #!/bin/bash
-echo "=====deploy node-websocket-msg-sender start====="
+echo "=====deploy msg start====="
 
 #获取系统当前时间
 t=$(date +%y%m%d_%H%M%S)
 
-#打开后端文件node-websocket-msg-sender所在目录
-cd /home/liuyuanbing/msg
+#打开后端文件msg所在目录
+cd /home/liuyuanbing/todolist/tunnel
 
-#备份当前myapp文件夹，备份后的文件夹以"myapp_ + 当前时间戳"的形式命名
-cp -r node-websocket-msg-sender node-websocket-msg-sender_$t
+#备份当前msg文件夹，备份后的文件夹以"msg_ + 当前时间戳"的形式命名
+cp -r msg msg_$t
 
-#清理myapp的备份文件夹，最多只保留最近的两个备份文件夹
-sh /home/liuyuanbing/shell/keep_most_2_node-websocket-msg-sender_copy_by_for.sh
+#清理msg的备份文件夹，最多只保留最近的两个备份文件夹
+sh /home/liuyuanbing/shell/keep_most_2_msg_copy_by_for.sh
 
-#清空服务器当前目录下myapp文件夹中的内容
-rm -rf ./node-websocket-msg-sender/*
+#清空服务器当前目录下msg文件夹中的内容
+rm -rf ./msg/*
 
-#将myapp.tar.gz解压到服务器当前目录下的myapp文件夹中
-tar vxf node-websocket-msg-sender.tar.gz -C ./node-websocket-msg-sender
+#将msg.tar.gz解压到服务器当前目录下的msg文件夹中
+tar vxf msg.tar.gz -C ./msg
 
-#删除服务器当前目录下的myapp.tar.gz
-rm -rf node-websocket-msg-sender.tar.gz
+#删除服务器当前目录下的msg.tar.gz
+rm -rf msg.tar.gz
 
 #pm2路径变量
-pm2=/root/node-v8.0.0-linux-x64/bin/pm2
+pm2=/usr/local/bin/pm2
 
 #www路径变量
-www=/home/liuyuanbing/msg/node-websocket-msg-sender/bin/www
+www=/home/liuyuanbing/todolist/tunnel/msg/bin/www
 
 #pm2版本
 echo "pm2 --version："
@@ -437,14 +438,78 @@ $pm2 start $www -i 0 --name "msg" --log-date-format="YYYY-MM-DD HH:mm Z"
 echo "updated pm2 list："
 $pm2 list
 
-echo "=====deploy node-websocket-msg-sender end====="
+echo "=====deploy msg end====="
 ```
+
+`keep_most_2_msg_copy_by_for.sh`脚本代码如下，感兴趣的朋友可以参考：
+
+```shell
+#!/bin/bash 
+# 删除历史项目，只保留最近2个项目文件和msg项目
+
+CurrentPath=/home/liuyuanbing/todolist/tunnel
+LogFile="$CurrentPath/"run.log
+MaxSaveCount=2
+RunDir="msg"
+RunDirRegex=^"$RunDir"_.*
+DirArr=()
+RetainArr=()
+echo "=====>一次清理log开始<=====" >> $LogFile
+echo $RunDirRegex
+for element in `ls $CurrentPath`
+do
+	dir_or_file=$CurrentPath"/"$element
+	if [[ -d $dir_or_file && "$element" != $RunDir && "$element" =~ $RunDirRegex ]]
+	then
+		DirArr=(${DirArr[@]} $element)
+	fi
+done
+
+echo "-----所有目录------" >> $LogFile
+echo ${DirArr[@]}  >> $LogFile
+len=${#DirArr[*]}
+echo "len:"$len  >> $LogFile
+
+if [ $len -gt $MaxSaveCount ]
+then
+	#按文件名从大到小排序
+	for((i=0;i<len;i++))
+	do
+		for((j=0;j<len-i-1;j++))
+		do
+			if [[ "${DirArr[j]}" < "${DirArr[j+1]}" ]]
+			then
+				temp=${DirArr[j]}
+				DirArr[j]=${DirArr[j+1]}
+				DirArr[j+1]=$temp
+			fi
+		done
+	done
+
+	echo "-----排序后目录------" >> $LogFile
+	echo ${DirArr[@]} >> $LogFile
+	echo "-----清理开始------" >> $LogFile
+	echo "-----删除历史目录------" >> $LogFile
+	for((t=$MaxSaveCount;t<len;t++))
+	do
+		removeDir=$CurrentPath"/${DirArr[t]}"
+		echo "rm -r "$removeDir >> $LogFile
+		rm -r $removeDir
+	done
+
+	echo "-----清理完成------" >> $LogFile
+else
+	echo "no more than $MaxSaveCount $RunDir copy dirs in $CurrentPath"
+fi
+echo "=====>一次清理log结束<=====" >> $LogFile
+```
+
 ### nginx
 ```shell
 #websocket	
 location ^~ /socket.io/ {
 	# 转发websocket需要的设置 start
-	proxy_pass http://127.0.0.1:8082;
+	proxy_pass http://127.0.0.1:8083;
 	proxy_set_header Host $host;
 	proxy_http_version 1.1; 
 	proxy_set_header Upgrade $http_upgrade;
@@ -458,7 +523,7 @@ location ^~ /socket.io/ {
 }
 
 location ^~ /ws/ {
-	proxy_pass http://127.0.0.1:8082;
+	proxy_pass http://127.0.0.1:8083;
 }
 #websocket
 ```
