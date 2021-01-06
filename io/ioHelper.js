@@ -1,5 +1,9 @@
 var redis = require('../utils/redis');
-var redisClient1 = require("redis").createClient();
+var redisClient1 = require("redis").createClient({
+    host: '127.0.0.1',
+    port: 6379,
+    password: 'lyb171049'
+});
 
 redisClient1.select(0, function (err, result) {
 	if (err) {

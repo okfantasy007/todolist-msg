@@ -3,7 +3,11 @@ var redis = require("redis");
 
 if (!client) {
 	console.log("没有redis连接，重新创建redis连接");
-	var client = redis.createClient();
+	var client = redis.createClient({
+        host: '127.0.0.1',
+        port: 6379,
+        password: 'lyb171049'
+    });
 	//切换到db(1)
 	client.select(1, function (err) {
 		if (err) {
