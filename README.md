@@ -372,7 +372,7 @@ function deleteToRedirectLogin(self, uid) {
 ```
 ## 部署
 该项目结合自己搭建的jenkins实现自动化部署。
-![部署](https://github.com/okfantasy007/todolist-msg/blob/master/public/deploy/todolist-msg%EF%BC%88jenkins%EF%BC%89.png "部署")
+![部署](https://github.com/okfantasy007/todolist-msg/blob/master/public/deploy/todolist-msg(jenkins).png "部署")
 
 ### 构建阶段
 ```shell
